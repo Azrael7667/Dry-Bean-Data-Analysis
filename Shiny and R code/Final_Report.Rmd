@@ -1,0 +1,612 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Load required libraries
+library(readxl)     
+library(ggplot2)  
+library(GGally) 
+library(corrplot) 
+library(reshape2)   
+library(dplyr)
+library(ggcorrplot)
+
+```
+
+```{r}
+# Load the dataset from the provided file path
+data <- read_excel("Dry_Bean_Dataset.xlsx")
+
+# Check the first few rows of the dataset
+head(data)
+
+```
+
+
+```{r}
+# Summary of the dataset
+summary(data)
+
+# Structure of the dataset
+str(data)
+
+```
+
+```{r}
+
+missing_values_summary <- colSums(is.na(data))
+
+missing_values_df <- data.frame(
+  Column = names(missing_values_summary),
+  Missing_Values = missing_values_summary
+)
+
+print(missing_values_df)
+
+```
+
+
+
+```{r}
+
+duplicate_rows <- data[duplicated(data), ]
+
+print(duplicate_rows)
+
+number_of_duplicates <- nrow(duplicate_rows)
+print(paste("Number of duplicate rows:", number_of_duplicates))
+
+has_duplicates <- any(duplicated(data))
+print(paste("Are there any duplicate rows?", has_duplicates))
+
+```
+
+
+
+
+
+
+
+
+```{r}
+# Set a consistent color palette
+# Expanded color palette with 7 colors
+my_colors <- scale_fill_manual(values = c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+
+```
+
+
+```{r}
+# 1. Plotting the distribution of the 'Class' variable
+ggplot(data = data, aes(x = Class)) + 
+  geom_bar(aes(fill = Class)) + 
+  labs(title = "Distribution of Bean Classes", x = "Bean Class", y = "Count") +
+  my_colors
+
+```
+
+
+
+```{r}
+# 2. Density plot of 'Area' for each bean class
+ggplot(data, aes(x = Area, fill = Class)) + 
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of Area by Bean Class", x = "Area", y = "Density") +
+  my_colors
+```
+
+
+
+
+```{r}
+# 3. Boxplot for 'Perimeter' across different classes
+ggplot(data, aes(x = Class, y = Perimeter, fill = Class)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of Perimeter by Bean Class", x = "Bean Class", y = "Perimeter") +
+  my_colors
+```
+
+
+
+
+```{r}
+# 4. Scatter plot of MajorAxisLength vs MinorAxisLength
+ggplot(data, aes(x = MajorAxisLength, y = MinorAxisLength, color = Class)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Major vs Minor Axis Length", x = "Major Axis Length", y = "Minor Axis Length") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+
+```
+
+
+
+```{r}
+# 5. Pairwise plot for a few key features
+ggpairs(data[,c("Area", "Perimeter", "MajorAxisLength", "MinorAxisLength", "Class")], 
+        aes(color = Class, alpha = 0.6)) + 
+  labs(title = "Pairwise Plot for Key Features by Bean Class")
+
+```
+
+
+
+
+
+```{r}
+# Load required libraries
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+
+# Assuming you have a dataset 'data' and excluding the 'Class' column from correlations
+# Generate the correlation matrix for numeric variables
+corr_matrix <- cor(data %>% select_if(is.numeric), use = "complete.obs")
+
+# Melt the correlation matrix into long format for ggplot2
+melted_corr <- melt(corr_matrix)
+
+# Create the correlation heatmap using ggplot2
+p <- ggplot(melted_corr, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#00AFBB", mid = "white", high = "#FC4E07", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", name = "Correlation") +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap", x = "Variables", y = "Variables") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right")
+
+p
+
+```
+
+
+
+
+```{r}
+# 7. Bar plot of roundness across different classes
+ggplot(data, aes(x = Class, y = roundness, fill = Class)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +
+  labs(title = "Average Roundness by Bean Class", x = "Bean Class", y = "Average Roundness") +
+  my_colors
+```
+
+
+
+```{r}
+# 8. Boxplot for 'Compactness' by Class
+ggplot(data, aes(x = Class, y = Compactness, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Compactness by Bean Class", x = "Bean Class", y = "Compactness") +
+  my_colors
+```
+
+
+
+
+```{r}
+# 9. Histogram for the 'Eccentricity' variable
+ggplot(data, aes(x = Eccentricity)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of Eccentricity", x = "Eccentricity", y = "Count")
+```
+
+
+
+```{r}
+# 10. Violin plot of 'AspectRation' across bean classes
+ggplot(data, aes(x = Class, y = AspectRation, fill = Class)) + 
+  geom_violin(trim = FALSE) +
+  labs(title = "Violin Plot of Aspect Ratio by Class", x = "Bean Class", y = "Aspect Ratio") +
+  my_colors
+```
+
+
+
+```{r}
+# 11. Scatter plot of 'EquivDiameter' vs 'Solidity'
+ggplot(data, aes(x = EquivDiameter, y = Solidity, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of EquivDiameter vs Solidity", x = "EquivDiameter", y = "Solidity") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+```
+
+```{r}
+# 12. Boxplot of 'ShapeFactor1' across classes
+ggplot(data, aes(x = Class, y = ShapeFactor1, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of ShapeFactor1 by Class", x = "Bean Class", y = "ShapeFactor1") +
+  my_colors
+```
+
+
+```{r}
+# 13. Histogram of 'ShapeFactor2'
+ggplot(data, aes(x = ShapeFactor2)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ShapeFactor2", x = "ShapeFactor2", y = "Count")
+```
+
+
+
+
+```{r}
+# 14. Density plot of 'ShapeFactor3' by class
+ggplot(data, aes(x = ShapeFactor3, fill = Class)) +
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of ShapeFactor3 by Class", x = "ShapeFactor3", y = "Density") +
+  my_colors
+```
+
+
+```{r}
+# 15. Scatter plot of 'ShapeFactor3' vs 'ShapeFactor4'
+ggplot(data, aes(x = ShapeFactor3, y = ShapeFactor4, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of ShapeFactor3 vs ShapeFactor4", x = "ShapeFactor3", y = "ShapeFactor4") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+```
+
+
+
+
+```{r}
+# 16. Boxplot of 'Extent' across bean classes
+ggplot(data, aes(x = Class, y = Extent, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Extent by Class", x = "Bean Class", y = "Extent") +
+  my_colors
+
+```
+
+
+
+```{r}
+# 17. Scatter plot of 'Area' vs 'Perimeter'
+ggplot(data, aes(x = Area, y = Perimeter, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Area vs Perimeter", x = "Area", y = "Perimeter") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+```
+
+
+
+
+
+```{r}
+# 18. Histogram of 'ConvexArea'
+ggplot(data, aes(x = ConvexArea)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ConvexArea", x = "ConvexArea", y = "Count")
+```
+
+
+```{r}
+# 19. Boxplot of 'Eccentricity' across bean classes
+ggplot(data, aes(x = Class, y = Eccentricity, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Eccentricity by Class", x = "Bean Class", y = "Eccentricity") +
+  my_colors
+```
+
+
+
+
+
+```{r}
+# 20. Density plot of 'Compactness' by class
+ggplot(data, aes(x = Compactness, fill = Class)) +
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of Compactness by Class", x = "Compactness", y = "Density") +
+  my_colors
+```
+
+
+```{r}
+# 21. Scatter plot of 'Perimeter' vs 'AspectRation'
+ggplot(data, aes(x = Perimeter, y = AspectRation, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Perimeter vs Aspect Ratio", x = "Perimeter", y = "Aspect Ratio") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+
+```
+
+```{r}
+# 22. Histogram of 'ShapeFactor4'
+ggplot(data, aes(x = ShapeFactor4)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ShapeFactor4", x = "ShapeFactor4", y = "Count")
+```
+
+
+
+
+```{r}
+# 23. Density plot of 'Solidity' by class
+ggplot(data, aes(x = Solidity, fill = Class)) + 
+  geom_density(alpha = 0.7) +
+  labs(title = "Density Plot of Solidity by Class", x = "Solidity", y = "Density") +
+  my_colors
+```
+
+
+
+```{r}
+# 24. Scatter plot of 'Roundness' vs 'Compactness'
+ggplot(data, aes(x = roundness, y = Compactness, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Roundness vs Compactness", x = "Roundness", y = "Compactness") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+```
+
+
+```{r}
+# 25. Boxplot of 'EquivDiameter' by class
+ggplot(data, aes(x = Class, y = EquivDiameter, fill = Class)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of EquivDiameter by Class", x = "Bean Class", y = "EquivDiameter") +
+  my_colors
+```
+
+
+
+```{r}
+# 26. Density plot of 'ShapeFactor1' by class
+ggplot(data, aes(x = ShapeFactor1, fill = Class)) + 
+  geom_density(alpha = 0.7) +
+  labs(title = "Density Plot of ShapeFactor1 by Class", x = "ShapeFactor1", y = "Density") +
+  my_colors
+```
+
+
+
+
+```{r}
+# 27. Scatter plot of 'ConvexArea' vs 'Area'
+ggplot(data, aes(x = ConvexArea, y = Area, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of ConvexArea vs Area", x = "Convex Area", y = "Area") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+```
+
+
+
+
+```{r}
+
+
+
+
+```
+
+
+
+
+```{r}
+# Create a directory called "graphs" if it doesn't already exist
+output_dir <- "graphs"
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
+
+# 1. Plotting the distribution of the 'Class' variable
+p1 <- ggplot(data, aes(x = Class)) + 
+  geom_bar(aes(fill = Class)) + 
+  labs(title = "Distribution of Bean Classes", x = "Bean Class", y = "Count") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/bean_class_distribution.png"), plot = p1, width = 8, height = 6)
+
+# 2. Density plot of 'Area' for each bean class
+p2 <- ggplot(data, aes(x = Area, fill = Class)) + 
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of Area by Bean Class", x = "Area", y = "Density") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/density_area_by_class.png"), plot = p2, width = 8, height = 6)
+
+# 3. Boxplot for 'Perimeter' across different classes
+p3 <- ggplot(data, aes(x = Class, y = Perimeter, fill = Class)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of Perimeter by Bean Class", x = "Bean Class", y = "Perimeter") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_perimeter.png"), plot = p3, width = 8, height = 6)
+
+# 4. Scatter plot of MajorAxisLength vs MinorAxisLength
+p4 <- ggplot(data, aes(x = MajorAxisLength, y = MinorAxisLength, color = Class)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Major vs Minor Axis Length", x = "Major Axis Length", y = "Minor Axis Length") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_major_minor_axis.png"), plot = p4, width = 8, height = 6)
+
+# 5. Pairwise plot for a few key features
+p5 <- ggpairs(data[,c("Area", "Perimeter", "MajorAxisLength", "MinorAxisLength", "Class")], 
+              aes(color = Class, alpha = 0.6))
+ggsave(filename = paste0(output_dir, "/pairwise_plot.png"), plot = p5, width = 8, height = 6)
+
+
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+
+
+corr_matrix <- cor(data %>% select_if(is.numeric), use = "complete.obs")
+
+# Melt the correlation matrix into long format for ggplot2
+melted_corr <- melt(corr_matrix)
+
+# Create the correlation heatmap using ggplot2
+p <- ggplot(melted_corr, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "#00AFBB", mid = "white", high = "#FC4E07", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", name = "Correlation") +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap", x = "Variables", y = "Variables") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right")
+
+# Save the plot as a PNG file
+ggsave(filename = "correlation_heatmap.png", plot = p, width = 8, height = 6, dpi = 300)
+
+
+# Save the correlation heatmap as a PNG
+png(filename = paste0(output_dir, "/correlation_heatmap.png"), width = 800, height = 600)
+corrplot(corr_matrix, method="color", type="upper", tl.cex = 0.6, title="Correlation Heatmap")
+dev.off()  # Close the PNG device
+
+
+# 7. Bar plot of roundness across different classes
+p7 <- ggplot(data, aes(x = Class, y = roundness, fill = Class)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +
+  labs(title = "Average Roundness by Bean Class", x = "Bean Class", y = "Average Roundness") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/barplot_roundness.png"), plot = p7, width = 8, height = 6)
+
+
+# 8. Boxplot for 'Compactness' by Class
+p8 <- ggplot(data, aes(x = Class, y = Compactness, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Compactness by Bean Class", x = "Bean Class", y = "Compactness") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_compactness.png"), plot = p8, width = 8, height = 6)
+
+# 9. Histogram for the 'Eccentricity' variable
+p9 <- ggplot(data, aes(x = Eccentricity)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of Eccentricity", x = "Eccentricity", y = "Count")
+ggsave(filename = paste0(output_dir, "/histogram_eccentricity.png"), plot = p9, width = 8, height = 6)
+
+# 10. Violin plot of 'Aspect Ratio' across bean classes
+p10 <- ggplot(data, aes(x = Class, y = AspectRation, fill = Class)) + 
+  geom_violin(trim = FALSE) +
+  labs(title = "Violin Plot of Aspect Ratio by Class", x = "Bean Class", y = "Aspect Ratio") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/violinplot_aspect_ratio.png"), plot = p10, width = 8, height = 6)
+
+# 11. Scatter plot of 'EquivDiameter' vs 'Solidity'
+p11 <- ggplot(data, aes(x = EquivDiameter, y = Solidity, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of EquivDiameter vs Solidity", x = "EquivDiameter", y = "Solidity") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_equiv_solidity.png"), plot = p11, width = 8, height = 6)
+
+# 12. Boxplot of 'ShapeFactor1' across classes
+p12 <- ggplot(data, aes(x = Class, y = ShapeFactor1, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of ShapeFactor1 by Class", x = "Bean Class", y = "ShapeFactor1") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_shapefactor1.png"), plot = p12, width = 8, height = 6)
+
+# 13. Histogram of 'ShapeFactor2'
+p13 <- ggplot(data, aes(x = ShapeFactor2)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ShapeFactor2", x = "ShapeFactor2", y = "Count")
+ggsave(filename = paste0(output_dir, "/histogram_shapefactor2.png"), plot = p13, width = 8, height = 6)
+
+# 14. Density plot of 'ShapeFactor3' by class
+p14 <- ggplot(data, aes(x = ShapeFactor3, fill = Class)) +
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of ShapeFactor3 by Class", x = "ShapeFactor3", y = "Density") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/density_shapefactor3.png"), plot = p14, width = 8, height = 6)
+
+# 15. Scatter plot of 'ShapeFactor3' vs 'ShapeFactor4'
+p15 <- ggplot(data, aes(x = ShapeFactor3, y = ShapeFactor4, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of ShapeFactor3 vs ShapeFactor4", x = "ShapeFactor3", y = "ShapeFactor4") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_shapefactor3_shapefactor4.png"), plot = p15, width = 8, height = 6)
+
+# 16. Boxplot of 'Extent' across bean classes
+p16 <- ggplot(data, aes(x = Class, y = Extent, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Extent by Class", x = "Bean Class", y = "Extent") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_extent.png"), plot = p16, width = 8, height = 6)
+
+# 17. Scatter plot of 'Area' vs 'Perimeter'
+p17 <- ggplot(data, aes(x = Area, y = Perimeter, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Area vs Perimeter", x = "Area", y = "Perimeter") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_area_perimeter.png"), plot = p17, width = 8, height = 6)
+
+# 18. Histogram of 'ConvexArea'
+p18 <- ggplot(data, aes(x = ConvexArea)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ConvexArea", x = "ConvexArea", y = "Count")
+ggsave(filename = paste0(output_dir, "/histogram_convexarea.png"), plot = p18, width = 8, height = 6)
+
+# 19. Boxplot of 'Eccentricity' across bean classes
+p19 <- ggplot(data, aes(x = Class, y = Eccentricity, fill = Class)) + 
+  geom_boxplot() + 
+  labs(title = "Boxplot of Eccentricity by Class", x = "Bean Class", y = "Eccentricity") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_eccentricity.png"), plot = p19, width = 8, height = 6)
+
+# 20. Density plot of 'Compactness' by class
+p20 <- ggplot(data, aes(x = Compactness, fill = Class)) +
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of Compactness by Class", x = "Compactness", y = "Density") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/density_compactness.png"), plot = p20, width = 8, height = 6)
+
+# 21. Scatter plot of 'Perimeter' vs 'Aspect Ratio'
+p21 <- ggplot(data, aes(x = Perimeter, y = AspectRation, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Perimeter vs Aspect Ratio", x = "Perimeter", y = "Aspect Ratio") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_perimeter_aspectratio.png"), plot = p21, width = 8, height = 6)
+
+# 22. Histogram of 'ShapeFactor4'
+p22 <- ggplot(data, aes(x = ShapeFactor4)) +
+  geom_histogram(fill = "#4E79A7", bins = 30) + 
+  labs(title = "Distribution of ShapeFactor4", x = "ShapeFactor4", y = "Count")
+ggsave(filename = paste0(output_dir, "/histogram_shapefactor4.png"), plot = p22, width = 8, height = 6)
+
+# 23. Density plot of 'Solidity' by class
+p23 <- ggplot(data, aes(x = Solidity, fill = Class)) + 
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of Solidity by Class", x = "Solidity", y = "Density") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/density_solidity.png"), plot = p23, width = 8, height = 6)
+
+# 24. Scatter plot of 'Roundness' vs 'Compactness'
+p24 <- ggplot(data, aes(x = roundness, y = Compactness, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of Roundness vs Compactness", x = "Roundness", y = "Compactness") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_roundness_compactness.png"), plot = p24, width = 8, height = 6)
+
+# 25. Boxplot of 'EquivDiameter' by class
+p25 <- ggplot(data, aes(x = Class, y = EquivDiameter, fill = Class)) + 
+  geom_boxplot() +
+  labs(title = "Boxplot of EquivDiameter by Class", x = "Bean Class", y = "EquivDiameter") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/boxplot_equivdiameter.png"), plot = p25, width = 8, height = 6)
+
+# 26. Density plot of 'ShapeFactor1' by class
+p26 <- ggplot(data, aes(x = ShapeFactor1, fill = Class)) + 
+  geom_density(alpha = 0.7) + 
+  labs(title = "Density Plot of ShapeFactor1 by Class", x = "ShapeFactor1", y = "Density") +
+  my_colors
+ggsave(filename = paste0(output_dir, "/density_shapefactor1.png"), plot = p26, width = 8, height = 6)
+
+# 27. Scatter plot of 'ConvexArea' vs 'Area'
+p27 <- ggplot(data, aes(x = ConvexArea, y = Area, color = Class)) + 
+  geom_point(alpha = 0.6) +
+  labs(title = "Scatter Plot of ConvexArea vs Area", x = "Convex Area", y = "Area") +
+  scale_color_manual(values=c("#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1"))
+ggsave(filename = paste0(output_dir, "/scatter_convexarea_area.png"), plot = p27, width = 8, height = 6)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
